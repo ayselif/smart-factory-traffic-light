@@ -1,0 +1,18 @@
+"""Application-wide configuration constants."""
+
+SERVER_ENDPOINT = "opc.tcp://0.0.0.0:4840/traffic-light/"
+SERVER_NAME = "Smart Factory Traffic Light OPC UA Server"
+NAMESPACE_URI = "urn:smart-factory:traffic-light"
+
+RED_GPIO = 17
+YELLOW_GPIO = 27
+GREEN_GPIO = 22
+TOUCH_GPIO = 18
+
+DEFAULT_RED_DURATION = 30.0
+DEFAULT_YELLOW_DURATION = 5.0
+DEFAULT_GREEN_DURATION = 20.0
+DEFAULT_GREEN_AFTER_TOUCH_DURATION = 6.0
+
+GPIO_POLL_INTERVAL = 0.1
+OPCUA_SYNC_INTERVAL = 0.2
