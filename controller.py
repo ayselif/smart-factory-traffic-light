@@ -174,29 +174,56 @@ class TrafficLightController:
         return False
 
     async def _run_green_phase(self) -> None:
-        request_received = await self._wait(
-            self.configuration.green_duration,
-            accept_pedestrian_request=True,
+    normal_deadline = (
+        monotonic()
+        + self.configuration.green_duration
+    )
+
+    priority_deadline = None
+
+    while not self._shutdown_requested:
+        touch_started = self._read_touch_event()
+
+        if touch_started:
+            self.request_pedestrian_crossing(
+                source="TOUCH_SENSOR"
+            )
+
+        priority_requested = (
+            self.state.mode
+            == TrafficMode.PEDESTRIAN_PRIORITY
+            or self.state.pedestrian_requested
         )
 
-        if not request_received:
+        if (
+            priority_requested
+            and priority_deadline is None
+        ):
+            priority_duration = (
+                self.configuration
+                .green_after_touch_duration
+            )
+
+            priority_deadline = (
+                monotonic()
+                + priority_duration
+            )
+
+            print(
+                "Pedestrian priority activated. "
+                f"Green will remain active for "
+                f"{priority_duration:.1f} seconds."
+            )
+
+        current_time = monotonic()
+
+        if priority_deadline is not None:
+            if current_time >= priority_deadline:
+                return
+        elif current_time >= normal_deadline:
             return
 
-        remaining_time = (
-            self.configuration.green_after_touch_duration
-        )
-
-        print(
-            "Pedestrian request accepted. "
-            f"Green will remain active for "
-            f"{remaining_time:.1f} seconds."
-        )
-
-        await self._wait(
-            remaining_time,
-            accept_pedestrian_request=False,
-        )
-
+        await asyncio.sleep(GPIO_POLL_INTERVAL)
     async def run(self) -> None:
         self.configuration.validate()
 
